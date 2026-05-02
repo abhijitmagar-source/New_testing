@@ -11,28 +11,28 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
-    - name: Setup SSH
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.EC2_KEY }}
+    - name: Setup SSH key
+      run: |
+        echo "${{ secrets.EC2_KEY }}" > key.pem
+        chmod 600 key.pem
 
     - name: Deploy to EC2
       run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+        ssh -i key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
 
           cd New_testing
 
-          echo "Pull latest code from GitHub..."
+          echo "Pull latest code..."
           git pull origin main
 
-          echo "Stopping old containers..."
+          echo "Stopping containers..."
           docker compose down
 
-          echo "Building and starting containers..."
+          echo "Starting containers..."
           docker compose up -d --build
 
-          echo "Deployment completed 🚀"
+          echo "Done 🚀"
 
         EOF
